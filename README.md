@@ -1,2 +1,2 @@
 # gonkey
-MediaMonkey iwth Google Music
+MediaMonkey with Google Music
