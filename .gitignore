@@ -1,3 +1,5 @@
-creds.yml
+settings.yml
 *.pyc
 .notes
+oauth.cred
+launch.json

@@ -1,19 +1,21 @@
-import yaml, os
+import sys
 
-from gmusicapi import Mobileclient
+from google_music import GMusic
+from media_monkey import MM
 
-DIR = os.path.dirname(os.path.realpath(__file__))
-
-# Get credentials
-with open(DIR + '/creds.yml') as creds_file:
-  cred = yaml.load(creds_file)
-
-
-api = Mobileclient()
-logged_in = api.login(
-  cred['google_email'],
-  cred['google_password'],
-  Mobileclient.FROM_MAC_ADDRESS
+from helpers import (
+  settings,
+  dict2,
 )
 
-print(logged_in)
+
+gmusic = GMusic(settings)
+gmusic.load_data()
+# gmusic.update_playlist('Coldplay')
+
+sys.exit()
+
+mm = MM(settings)
+mm.load_tables()
+mm.load_data()
+print('Done')
