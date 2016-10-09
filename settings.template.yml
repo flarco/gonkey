@@ -4,5 +4,5 @@ oauth_file_name: "oauth.cred"
 media_monkey_db_path: "C:\Users\You\AppData\Roaming\MediaMonkey\MM.DB"
 
 media_monkey_playlists:
-  - Coldplay
-  - Kaskade
+  - "Coldplay Playlist 1"
+  - "Kaskade Hot songs"
