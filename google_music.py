@@ -136,7 +136,7 @@ class GMusic:
       
     song_ids_added = self.api.add_songs_to_playlist(playlist_id=pl_id, song_ids=track_ids)
     
-    log('{} song added to playlist{}!'.format(len(song_ids_added),playlist_name))
+    log('{} songs added to playlist{}!'.format(len(song_ids_added),playlist_name))
 
 
   def arrange_data(self):
