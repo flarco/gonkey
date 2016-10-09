@@ -28,7 +28,7 @@ See the template `settings.template.yml`. Create a new file called `settings.yml
 Put it your credentials, the MM database path and the name of the playlists you want to be synced. Make sure to follow the YAML conventions.
 
 ## Sync Playlists
-This is the most sought-after capability. This will synchronize the chosen playlist songs from MediaMonkey (GM) and Google Music (GM).
+This is the most sought-after capability. This will synchronize the chosen playlist songs from MediaMonkey (MM) and Google Music (GM).
 So far this is a one-way synchronization (MM to GM) -- Two way to be implemented in the future.
 
 To perform synchronization, make sure the 'media_monkey_playlists' variable is updated with the list of playlists you want synced.
