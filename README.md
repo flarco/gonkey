@@ -31,6 +31,18 @@ pip install -r requirements.pip
 See the template `settings.template.yml`. Create a new file called `settings.yml` in the root folder.
 Put it your credentials, the MM database path and the name of the playlists you want to be synced. Make sure to follow the YAML conventions.
 
+### Generate OAuth file
+In order to upload songs, we need to be authenticated.
+Make sure to have the variable `oauth_file_name` defined in the `settings.yml`, or leave it as it is.
+
+Then run:
+```
+python generate_oauth_file.py
+```
+
+It should open the browser and ask you to authenticate.
+Once done, the file will be created, and you'll be ready to upload songs.
+
 ## Sync Playlists
 This is the most sought-after capability. This will synchronize the chosen playlist songs from MediaMonkey (MM) and Google Music (GM).
 So far this is a one-way synchronization (MM to GM) -- Two way to be implemented in the future.
