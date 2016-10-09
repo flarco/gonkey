@@ -81,7 +81,6 @@ if __name__ == '__main__':
   mm.load_data()
   mm.arrange_data()
   log('Done')
-  print(list(mm.playlist_songs['a_Pink Martini'].values())[0])
 
 
 

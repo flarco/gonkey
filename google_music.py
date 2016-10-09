@@ -190,4 +190,3 @@ if __name__ == '__main__':
   gmusic.add_playlist('a_Bebel Gilberto')
   # gmusic.add_playlist('a_CoralieClement')
   # gmusic.add_all_playlists()
-  print(list(gmusic.playlist_songs['Coldplay'].keys())[0])
