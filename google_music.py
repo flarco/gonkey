@@ -14,7 +14,7 @@ from helpers import (
 tracks_pk_keys = [
   'albumArtist',
   'album',
-  'artist',
+  # 'artist',
   'title',
 ]
 get_song_pk = lambda track: '-'.join(track[k] for k in tracks_pk_keys)
@@ -183,5 +183,5 @@ if __name__ == '__main__':
   gmusic.load_data()
   gmusic.arrange_data()
   # gmusic.add_playlist('a_CoralieClement')
-  gmusic.add_all_playlists()
+  # gmusic.add_all_playlists()
   print(list(gmusic.playlist_songs['Coldplay'].keys())[0])

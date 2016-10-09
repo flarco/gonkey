@@ -50,9 +50,9 @@ class MM:
 
   def arrange_data(self):
     tracks_pk_keys = [
-      'Artist',
-      'Album',
       'AlbumArtist',
+      'Album',
+      # 'Artist',
       'SongTitle',
     ]
 
