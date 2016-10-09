@@ -1,15 +1,19 @@
 # gonkey
-MediaMonkey with Google Music
+MediaMonkey with Google Music!
 
+MediaMonkey = MM
+
+GoogleMusic = GM
 
 ## Operations to be implemented:
- - Update song rating (api.change_song_metadata)
- - Update song play count (api.increment_song_playcount)
- - Update playlist
-   - Create (api.create_playlist)
-   - Edit (api.edit_playlist)
-   - Delete (api.delete_playlist)
-
+  - ~~Update song rating~~
+  - ~~Update song play count~~
+  - ~~Update playlist~~
+  - Upload/update album art for song (<https://github.com/simon-weber/gmusicapi/issues/242>)
+  - Two-way synchronization (GM -> MM):
+    - Metadata (rating, play count)
+    - Playlist order
+  
 ## Setup
 Assuming you have `git`, `python` & `pip` installed, you need to install the dependencies.
 
@@ -32,6 +36,7 @@ This is the most sought-after capability. This will synchronize the chosen playl
 So far this is a one-way synchronization (MM to GM) -- Two way to be implemented in the future.
 
 To perform synchronization, make sure the 'media_monkey_playlists' variable is updated with the list of playlists you want synced.
+
 Then run:
 
 ```
