@@ -23,6 +23,7 @@ First, clone this repo:
 git clone https://github.com/flarco/gonkey.git
 cd gonkey
 ```
+
 Then install pip requirements:
 ```
 pip install -r requirements.pip
@@ -30,7 +31,7 @@ pip install -r requirements.pip
 
 ### Create settings.yml
 See the template `settings.template.yml`. Create a new file called `settings.yml` in the root folder.
-Put it your credentials, the MM database path and the name of the playlists you want to be synced. Make sure to follow the YAML conventions.
+Put in your credentials, the MM database path and the name of the playlists you want to be synced. Make sure to follow the YAML conventions.
 
 ### Generate OAuth file
 In order to upload songs, we need to be authenticated.
