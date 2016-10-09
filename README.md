@@ -10,6 +10,7 @@ GoogleMusic = GM
   - ~~Update song play count~~
   - ~~Update playlist~~
   - Upload/update album art for song (<https://github.com/simon-weber/gmusicapi/issues/242>)
+  - Handle unicode strings
   - Two-way synchronization (GM -> MM):
     - Metadata (rating, play count)
     - Playlist order
