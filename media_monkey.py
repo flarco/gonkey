@@ -22,10 +22,14 @@ class MM:
   tables_data = dict2()
   playlist_songs = {}
 
-  def __init__(self, settings):
+  def __init__(self, settings, load=True):
     "Create sqlalchemy engine"
     self.engine = create_engine('sqlite:///' + settings['media_monkey_db_path'])
     # self.engine = create_engine('sqlite:///C:\\Users\\Fritz\\AppData\\Roaming\\MediaMonkey\\MM2.DB')
+    if load:
+      self.load_tables()
+      self.load_data()
+      self.arrange_data()
 
   def load_tables(self):
     "Loads table/columns objects from SQLite database"
@@ -49,6 +53,7 @@ class MM:
       log("{} -> {}".format(table_name, len(self.tables_data[table_name])))
 
   def arrange_data(self):
+    "Arrange various lists' data with proper key identification"
     tracks_pk_keys = [
       'AlbumArtist',
       'Album',
@@ -64,6 +69,10 @@ class MM:
       song = self.tables_data.songs[pl_song.IDSong]
       song_pk = '-'.join(song[k] for k in tracks_pk_keys)
       self.playlist_songs[pl_name][song_pk] = song
+    
+  def increment_song_playcount(self, track, play_count_delta):
+    "Increment a song playcount by :play_count_delta, send UPDATE query to SQLite DB"
+
 
     
 if __name__ == '__main__':

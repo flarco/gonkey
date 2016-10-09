@@ -20,6 +20,7 @@ tracks_pk_keys = [
 get_song_pk = lambda track: '-'.join(track[k] for k in tracks_pk_keys)
 
 class GMusic:
+  "Class representing the library from user's google music profile"
 
   tables_api_call = [
     ('songs','get_all_songs'),
@@ -33,7 +34,7 @@ class GMusic:
   mm = None
 
 
-  def __init__(self, settings, mm=None):
+  def __init__(self, settings, mm=None, load=True):
     self.mm = mm
     self.api = Mobileclient()
     self.oauth_path = settings['oauth_file_name']
@@ -47,6 +48,10 @@ class GMusic:
       Mobileclient.FROM_MAC_ADDRESS
     )
     log('Logged In: {}'.format(logged_in))
+
+    if load:
+      self.load_data()
+      self.arrange_data()
   
   def load_data(self, only_tables=[]):
     "Loads GMusic Metadata into memory"
@@ -90,16 +95,17 @@ class GMusic:
   def update_song_metadata(self, gm_track_id, mm_track):
     "Update Song Rating and Play Count"
     gm_song = self.tables_data.songs[gm_track_id]
-    gm_rating = gm_song['rating']
     mm_rating = str(int(float(mm_track.Rating)/20))
     
-    if mm_rating != gm_rating:
-      gm_song = mm_rating
+    if mm_rating != gm_song['rating']:
+      gm_song['rating'] = mm_rating
       self.api.change_song_metadata(gm_song)
     
     play_count_delta = mm_track.PlayCounter - gm_song.playCount
     if play_count_delta > 0:
       self.api.increment_song_playcount(gm_track_id, play_count_delta)
+    elif play_count_delta < 0:
+      self.mm.increment_song_playcount(mm_track, -1 * play_count_delta)
 
   def add_all_playlists(self):
     "Add all chosen playlists specified in settings file"
@@ -133,6 +139,7 @@ class GMusic:
         gm_track_id = self.add_track(mm_track)
       
       track_ids.append(gm_track_id)
+      self.update_song_metadata(gm_track_id, mm_track)
       
     song_ids_added = self.api.add_songs_to_playlist(playlist_id=pl_id, song_ids=track_ids)
     
@@ -140,7 +147,7 @@ class GMusic:
 
 
   def arrange_data(self):
-    "Arrnange various lists with proper key identification"
+    "Arrange various lists' data with proper key identification"
     self.all_songs = {get_song_pk(track): track  for id, track in self.tables_data.songs.items()}
     self.playlist_names = {p_rec.name: p_rec  for id, p_rec in self.tables_data.playlists.items()}
     self.playlist_songs = {p_rec.name: OrderedDict()  for id, p_rec in self.tables_data.playlists.items()}
@@ -156,8 +163,6 @@ class GMusic:
 
   def update_playlist(self, playlist_name):
     "Updates the GMusic Playlist from MM"
-
-    
 
     # Arrange data in keys
     all_playlists = dict2({p.name:p for p in self.tables_data.playlists})
@@ -182,6 +187,7 @@ if __name__ == '__main__':
   gmusic = GMusic(settings, mm)
   gmusic.load_data()
   gmusic.arrange_data()
+  gmusic.add_playlist('a_Bebel Gilberto')
   # gmusic.add_playlist('a_CoralieClement')
   # gmusic.add_all_playlists()
   print(list(gmusic.playlist_songs['Coldplay'].keys())[0])
