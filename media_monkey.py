@@ -60,15 +60,29 @@ class MM:
       # 'Artist',
       'SongTitle',
     ]
+    get_song_pk = lambda song: '-'.join(song[k] for k in tracks_pk_keys)
 
+    self.all_songs = {get_song_pk(track): track  for id, track in self.tables_data.songs.items()}
     playlist_id = {p_rec.IDPlaylist: p_rec  for playlist, p_rec in self.tables_data.playlists.items()}
     self.playlist_songs = {playlist: OrderedDict()  for playlist in self.tables_data.playlists}
     
     for id, pl_song in self.tables_data.playlistsongs.items():
       pl_name = playlist_id[pl_song.IDPlaylist].PlaylistName
       song = self.tables_data.songs[pl_song.IDSong]
-      song_pk = '-'.join(song[k] for k in tracks_pk_keys)
+      song_pk = get_song_pk(song)
       self.playlist_songs[pl_name][song_pk] = song
+
+  def search_songs(self, search_str):
+    "Search all songs in library for a query"
+    results = []
+    for pk_song in self.all_songs:
+      if search_str.lower() in pk_song.lower():
+        results.append(pk_song)
+    
+    if len(results) > 0:
+      print("Found {} songs!".format(len(results)))
+      for pk_song in results:
+        print(pk_song)
     
   def increment_song_playcount(self, track, play_count_delta):
     "Increment a song playcount by :play_count_delta, send UPDATE query to SQLite DB"
