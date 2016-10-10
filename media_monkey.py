@@ -10,7 +10,8 @@ from sqlalchemy.engine import reflection
 from sqlalchemy.schema import CreateTable
 
 class MM:
-  
+  "Class represnting MediaMonkey library"
+
   table_list_key = {
     'songs' : 'ID',
     'genres' : 'GenreName',
@@ -22,14 +23,16 @@ class MM:
   tables_data = dict2()
   playlist_songs = {}
 
+
   def __init__(self, settings, load=True):
     "Create sqlalchemy engine"
     self.engine = create_engine('sqlite:///' + settings['media_monkey_db_path'])
-    # self.engine = create_engine('sqlite:///C:\\Users\\Fritz\\AppData\\Roaming\\MediaMonkey\\MM2.DB')
+
     if load:
       self.load_tables()
       self.load_data()
       self.arrange_data()
+
 
   def load_tables(self):
     "Loads table/columns objects from SQLite database"
@@ -40,6 +43,7 @@ class MM:
     for table_name in self.table_list_key:
       self.tables_meta[table_name] = Table(table_name, meta)
       insp.reflecttable(self.tables_meta[table_name], None)
+    
 
   def load_data(self):
     "Load data into memory from Database"
@@ -51,6 +55,7 @@ class MM:
       # self.tables_data[table_name] = [Record(*row) for row in result]
       self.tables_data[table_name] = {r[key]:dict2(r) for r in result}
       log("{} -> {}".format(table_name, len(self.tables_data[table_name])))
+
 
   def arrange_data(self):
     "Arrange various lists' data with proper key identification"
@@ -72,6 +77,7 @@ class MM:
       song_pk = get_song_pk(song)
       self.playlist_songs[pl_name][song_pk] = song
 
+
   def search_songs(self, search_str):
     "Search all songs in library for a query"
     results = []
@@ -84,17 +90,9 @@ class MM:
       for pk_song in results:
         print(pk_song)
     
+    
   def increment_song_playcount(self, track, play_count_delta):
     "Increment a song playcount by :play_count_delta, send UPDATE query to SQLite DB"
-
-
-    
-if __name__ == '__main__':
-  mm = MM(settings)
-  mm.load_tables()
-  mm.load_data()
-  mm.arrange_data()
-  log('Done')
 
 
 
