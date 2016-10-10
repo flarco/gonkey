@@ -1,4 +1,3 @@
-import sys
 from collections import namedtuple, OrderedDict
 
 from gmusicapi import Mobileclient, Musicmanager, Webclient
@@ -13,17 +12,17 @@ from helpers import (
 )
 
 
-'playCount'
 tracks_pk_keys = [
   'albumArtist',
   'album',
   # 'artist',
   'title',
 ]
-get_song_pk = lambda track: '-'.join(track[k] for k in tracks_pk_keys)
+
 def get_song_pk(track):
   if track['albumArtist'] == '': track['albumArtist'] = track['artist']
   return '-'.join(track[k] for k in tracks_pk_keys)
+
 
 class GMusic:
   "Class representing the library from user's google music profile"
@@ -56,16 +55,20 @@ class GMusic:
     )
     log('Logged In Mobileclient: {}'.format(logged_in))
 
-    # logged_in = self.web_client.login(
-    #   settings['google_email'],
-    #   settings['google_password']
-    # )
-    # log('Logged In Webclient: {}'.format(logged_in))
+    # web_client does not work...
+    '''
+    logged_in = self.web_client.login(
+      settings['google_email'],
+      settings['google_password']
+    )
+    log('Logged In Webclient: {}'.format(logged_in))
+    '''
 
     if load:
       self.load_data()
       self.arrange_data()
   
+
   def load_data(self, only_tables=[]):
     "Loads GMusic Metadata into memory"
     for table_api_call in self.tables_api_call:
@@ -74,21 +77,27 @@ class GMusic:
         self.tables_data[table_name] = {r['id']:dict2(r) for r in getattr(self.api, api_call)()}
         log("{} -> {}".format(table_name, len(self.tables_data[table_name])))
   
+
   def compare_playlist(self, mm_playlist, gm_playlist):
-    "Compare a gmusic playlist vs a MM playlist"
-    "return True for equal, False for not equal"
+    """Compare a gmusic playlist vs a MM playlist
+    return True for equal, False for not equal"""
 
     if not self.mm:
       log('MediaMonkey library not loaded')
-      return
-  
+      return None
+    
+    if len(mm_playlist) != len(gm_playlist):
+      return False
+
+
   def delete_playlist(self, playlist_name):
     "Delete Playlist from GM"
     pl_id = self.playlist_names[playlist_name].id
     succ = self.api.delete_playlist(pl_id)
     if succ: log(playlist_name + ' deleted!')
     else: log(playlist_name + ' FAILED to delete!')
-    
+
+
   def add_track(self, mm_track):
     "Add MM song to GM"
     song_path = mm_track.SongPath
@@ -103,12 +112,16 @@ class GMusic:
     else:
       song_id = uploaded[song_path]
 
-      # artwork = File(song_path).tags['APIC:'].data # access APIC frame and grab the image
-      # with open('artwork.jpg', 'wb') as img:
-      #   img.write(artwork) # write artwork to new image
-      # self.web_client.upload_album_art(song_id, 'artwork.jpg')
+      # To be improved for album art update
+      '''
+      artwork = File(song_path).tags['APIC:'].data # access APIC frame and grab the image
+      with open('artwork.jpg', 'wb') as img:
+        img.write(artwork) # write artwork to new image
+      self.web_client.upload_album_art(song_id, 'artwork.jpg')
+      '''
 
     return song_id
+
 
   def update_song_metadata(self, gm_track_id, mm_track):
     "Update Song Rating and Play Count"
@@ -127,11 +140,13 @@ class GMusic:
     elif play_count_delta < 0:
       self.mm.increment_song_playcount(mm_track, -1 * play_count_delta)
 
+
   def add_all_playlists(self):
     "Add all chosen playlists specified in settings file"
     for playlist in self.chosen_playlists:
       self.add_playlist(playlist)
     
+
   def add_playlist(self, playlist_name):
     "Add MM playlist to GM"
 
@@ -173,8 +188,6 @@ class GMusic:
       log('Aborded adding playlist {}! Number of Songs mismatch {} != {}'.format(playlist_name), len(track_ids), len(mm_playlist.keys()))
         
       
-
-
   def arrange_data(self):
     "Arrange various lists' data with proper key identification"
     
@@ -190,7 +203,6 @@ class GMusic:
         self.playlist_songs[pl_name][song_pk] = pl_song
 
 
-
   def update_playlist(self, playlist_name):
     "Updates the GMusic Playlist from MM"
 
@@ -199,13 +211,13 @@ class GMusic:
     for name, meta in all_playlists.items():
       all_playlists[name].tracks_ = OrderedDict({track['id']: dict2(track) for track in all_playlists[name].tracks})
     
-
     # Check if playlist exists
     if playlist_name in all_playlists:
       log(playlist_name + ' found!')
       delete_playlist(playlist_name)
       
     add_playlist(playlist_name)
+  
   
   def search_songs(self, search_str):
     "Search all songs in library for a query"
@@ -218,16 +230,3 @@ class GMusic:
       print("Found {} songs!".format(len(results)))
       for pk_song in results:
         print(pk_song)
-      
-if __name__ == '__main__':
-  from media_monkey import MM
-  mm = MM(settings, load=False)
-  mm.load_tables()
-  mm.load_data()
-  mm.arrange_data()
-
-  gmusic = GMusic(settings, mm, load=False)
-  gmusic.load_data()
-  gmusic.arrange_data()
-  # gmusic.add_playlist('a_Delerium')
-  # gmusic.add_all_playlists()
