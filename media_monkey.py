@@ -93,6 +93,13 @@ class MM:
     
   def increment_song_playcount(self, track, play_count_delta):
     "Increment a song playcount by :play_count_delta, send UPDATE query to SQLite DB"
-
+    song_table = self.tables_meta['songs']
+    new_playcount = track.PlayCounter + play_count_delta
+    q_update = song_table.update().where(song_table.c.ID==track.ID).values(PlayCounter = new_playcount)
+    result = self.engine.execute(q_update)
+    if result:
+      return True
+    else:
+      return False
 
 
