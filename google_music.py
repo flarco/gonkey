@@ -20,7 +20,7 @@ tracks_pk_keys = [
 ]
 
 def get_song_pk(track):
-  if track['albumArtist'] == '': track['albumArtist'] = track['artist']
+  if not 'albumArtist' in track or track['albumArtist'] == '': track['albumArtist'] = track['artist']
   return '-'.join(track[k] for k in tracks_pk_keys)
 
 
@@ -77,17 +77,59 @@ class GMusic:
         self.tables_data[table_name] = {r['id']:dict2(r) for r in getattr(self.api, api_call)()}
         log("{} -> {}".format(table_name, len(self.tables_data[table_name])))
   
+  def sync_playlist(self, playlist):
+    "Synchronize the playlist between MM and GM: List of songs, ratings, play count"
+
+    if not playlist in self.mm.playlist_songs:
+      log('Playlist {} missing in MediaMonkey'.format(playlist))
+      return
+    if not playlist in self.playlist_songs:
+      log('Playlist {} missing in Google Music'.format(playlist))
+      return
+    
+    mm_playlist = self.mm.playlist_songs[playlist]
+    gm_playlist = self.playlist_songs[playlist]
+
+    if not self.compare_playlist(mm_playlist, gm_playlist):
+      self.add_playlist(playlist)
+    else:
+      for track_name in mm_playlist:
+        self.update_song_metadata(
+          gm_track_id = gm_playlist[track_name].id,
+          mm_track = mm_playlist[track_name]
+        )
+    
+    log('Synced {}!'.format(playlist))
+
 
   def compare_playlist(self, mm_playlist, gm_playlist):
     """Compare a gmusic playlist vs a MM playlist
     return True for equal, False for not equal"""
 
+    equal = True
+
     if not self.mm:
       log('MediaMonkey library not loaded')
       return None
     
+    mm_playlist_list = tuple([t for t in mm_playlist])
+    gm_playlist_list = tuple([t for t in gm_playlist])
+
     if len(mm_playlist) != len(gm_playlist):
-      return False
+      equal = False
+    else:
+      if mm_playlist_list != gm_playlist_list:
+        equal = False
+    
+    if not equal:
+      log('MM list != GM list')
+      # log('{} != {}'.format(str(mm_playlist_list), str(gm_playlist_list)))
+      gm_set = set(gm_playlist_list)
+      for t in mm_playlist_list:
+        if not t in gm_set:
+          log('Track {} missing in GM'.format(t))
+    
+    return equal
 
 
   def delete_playlist(self, playlist_name):
@@ -129,15 +171,19 @@ class GMusic:
     gm_song['rating'] = 0 if not 'rating' in gm_song else gm_song['rating']
     gm_song['playCount'] = 0 if not 'playCount' in gm_song else gm_song['playCount']
     mm_rating = str(int(float(mm_track.Rating)/20))
+    song_name = mm_track.AlbumArtist.encode('utf8') + b' -- ' + mm_track.SongTitle.encode('utf8')
     
     if mm_rating != gm_song['rating']:
       gm_song['rating'] = mm_rating
+      log('Updating GM rating for {}.'.format(song_name))
       self.api.change_song_metadata(gm_song)
     
     play_count_delta = mm_track.PlayCounter - gm_song.playCount
     if play_count_delta > 0:
+      log('Updating GM playcount for {}. Incrementing by {} to {}.'.format(song_name, play_count_delta, mm_track.PlayCounter))
       self.api.increment_song_playcount(gm_track_id, play_count_delta)
     elif play_count_delta < 0:
+      log('Updating MM playcount for {}. Incrementing by {} to {}.'.format(song_name, -1 * play_count_delta, gm_song.playCount))
       self.mm.increment_song_playcount(mm_track, -1 * play_count_delta)
 
 
@@ -145,6 +191,11 @@ class GMusic:
     "Add all chosen playlists specified in settings file"
     for playlist in self.chosen_playlists:
       self.add_playlist(playlist)
+
+  def sync_all_playlists(self):
+    "Compare all chosen playlists specified in settings file, adjust as necessary"
+    for playlist in self.chosen_playlists:
+      self.sync_playlist(playlist)
     
 
   def add_playlist(self, playlist_name):
@@ -216,7 +267,7 @@ class GMusic:
       log(playlist_name + ' found!')
       delete_playlist(playlist_name)
       
-    add_playlist(playlist_name)
+    self.add_playlist(playlist_name)
   
   
   def search_songs(self, search_str):
