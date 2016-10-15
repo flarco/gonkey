@@ -11,7 +11,6 @@ mm = MM(settings)
 
 log('Loading GM.')
 gmusic = GMusic(settings, mm)
-# gmusic.add_all_playlists()
 
 log('Syncing playlists!')
 gmusic.sync_all_playlists()

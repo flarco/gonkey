@@ -65,7 +65,13 @@ class MM:
       # 'Artist',
       'SongTitle',
     ]
-    get_song_pk = lambda song: '-'.join(song[k] for k in tracks_pk_keys)
+
+    def get_song_pk(song):
+      # if song['AlbumArtist'] == '' or (song['Artist'] != '' and song['AlbumArtist'] != ''):
+      if song['AlbumArtist'] == '':
+        song['AlbumArtist'] = song['Artist']
+      
+      return '-'.join(song[k] for k in tracks_pk_keys)
 
     self.all_songs = {get_song_pk(track): track  for id, track in self.tables_data.songs.items()}
     playlist_id = {p_rec.IDPlaylist: p_rec  for playlist, p_rec in self.tables_data.playlists.items()}

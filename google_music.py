@@ -15,13 +15,19 @@ from helpers import (
 tracks_pk_keys = [
   'albumArtist',
   'album',
-  # 'artist',
+  'title',
+]
+tracks_pk2_keys = [
+  'artist',
+  'album',
   'title',
 ]
 
 def get_song_pk(track):
   if not 'albumArtist' in track or track['albumArtist'] == '': track['albumArtist'] = track['artist']
   return '-'.join(track[k] for k in tracks_pk_keys)
+def get_song_pk2(track):
+  return '-'.join(track[k] for k in tracks_pk2_keys)
 
 
 class GMusic:
@@ -92,15 +98,21 @@ class GMusic:
 
     if not self.compare_playlist(mm_playlist, gm_playlist):
       self.add_playlist(playlist)
-    else:
-      for track_name in mm_playlist:
-        self.update_song_metadata(
-          gm_track_id = gm_playlist[track_name].id,
-          mm_track = mm_playlist[track_name]
-        )
+      self.playlist_modified.append(playlist)
+      
+    gm_playlist = self.playlist_songs[playlist]
+    for track_name in mm_playlist:
+      if not track_name in gm_playlist:
+        log('{} not found in gm_playlist "{}"...'.format(track_name, playlist))
+        continue
+      
+      self.update_song_metadata(
+        gm_track_id = gm_playlist[track_name].id,
+        mm_track = mm_playlist[track_name]
+      )
     
     log('Synced {}!'.format(playlist))
-
+    
 
   def compare_playlist(self, mm_playlist, gm_playlist):
     """Compare a gmusic playlist vs a MM playlist
@@ -143,7 +155,11 @@ class GMusic:
   def add_track(self, mm_track):
     "Add MM song to GM"
     song_path = mm_track.SongPath
-    song_path = "D" + song_path if song_path.startswith(":") else song_path
+    
+    if song_path.startswith(":"):
+      drive_prefix = 'Y' if 'DATA_3TB_BACKUP' in song_path else 'D'
+      song_path = drive_prefix + song_path
+    
     (uploaded, matched, not_uploaded) = self.gm_manager.upload([song_path])
 
     song_id = None
@@ -194,8 +210,19 @@ class GMusic:
 
   def sync_all_playlists(self):
     "Compare all chosen playlists specified in settings file, adjust as necessary"
+    self.playlist_modified = []
+    
     for playlist in self.chosen_playlists:
       self.sync_playlist(playlist)
+    
+    # if self.playlist_modified:
+    #   self.added_songs = False
+    #   log('Reloading to count newly added songs.')
+    #   self.load_data()
+    #   self.arrange_data()
+    #   self.sync_playlist
+    #   for playlist in self.playlist_modified:
+    #     self.sync_playlist(playlist)
     
 
   def add_playlist(self, playlist_name):
@@ -205,11 +232,7 @@ class GMusic:
       log('MediaMonkey library not loaded')
       return
     
-    all_playlists = dict2({p.name:p for p_id, p in self.tables_data.playlists.items()})
-
-    pl_id = self.api.create_playlist(playlist_name)
-    if pl_id: log(playlist_name + ' created!')
-    else: log(playlist_name + ' FAILED to create!')
+    gm_all_playlists = dict2({p.name:p for p_id, p in self.tables_data.playlists.items()})
 
     mm_playlist = self.mm.playlist_songs[playlist_name]
 
@@ -219,7 +242,6 @@ class GMusic:
       gm_track_id = None
       if track_pk in self.all_songs:
         gm_track_id = self.all_songs[track_pk].id
-        self.update_song_metadata(gm_track_id, mm_track)
       else:
         log('"{}" not found! Adding...'.format(track_pk))
         gm_track_id = self.add_track(mm_track)
@@ -227,14 +249,25 @@ class GMusic:
       if gm_track_id:
         track_ids.append(gm_track_id)
       
-    if playlist_name in all_playlists:
-      log(playlist_name + ' found! Deleting...')
-      self.api.delete_playlist(all_playlists[playlist_name].id)
+    if playlist_name in gm_all_playlists:
+      log(playlist_name + ' found! Deleting entries...')
+      # self.api.delete_playlist(gm_all_playlists[playlist_name].id)
+      entry_ids = [track['id'] for track in gm_all_playlists[playlist_name].tracks]
+      self.api.remove_entries_from_playlist(entry_ids)
+      pl_id = gm_all_playlists[playlist_name].id
+    else:
+      pl_id = self.api.create_playlist(playlist_name)
+      if pl_id: log(playlist_name + ' created!')
+      else: log(playlist_name + ' FAILED to create!')
     
     if True or len(track_ids) <= len(mm_playlist.keys()):
       song_ids_added = self.api.add_songs_to_playlist(playlist_id=pl_id, song_ids=track_ids)
   
       log('{} songs added to playlist {}!'.format(len(song_ids_added),playlist_name))
+      
+      # log('Reloading playlists')
+      # self.load_data(only_tables=['playlists'])
+      # self.arrange_data()
     else:
       log('Aborded adding playlist {}! Number of Songs mismatch {} != {}'.format(playlist_name), len(track_ids), len(mm_playlist.keys()))
         
@@ -242,7 +275,11 @@ class GMusic:
   def arrange_data(self):
     "Arrange various lists' data with proper key identification"
     
-    self.all_songs = {get_song_pk(track): track  for id, track in self.tables_data.songs.items()}
+    self.all_songs = {}
+    for id, track in self.tables_data.songs.items():
+      self.all_songs[get_song_pk(track)] = track
+      self.all_songs[get_song_pk2(track)] = track
+    
     self.playlist_names = {p_rec.name: p_rec  for id, p_rec in self.tables_data.playlists.items()}
     self.playlist_songs = {p_rec.name: OrderedDict()  for id, p_rec in self.tables_data.playlists.items()}
     
@@ -265,7 +302,7 @@ class GMusic:
     # Check if playlist exists
     if playlist_name in all_playlists:
       log(playlist_name + ' found!')
-      delete_playlist(playlist_name)
+      # self.delete_playlist(playlist_name)
       
     self.add_playlist(playlist_name)
   
