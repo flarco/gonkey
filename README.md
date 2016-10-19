@@ -1,7 +1,6 @@
-# gonkey
-MediaMonkey with Google Music!
-
 ![coollogo_com-7561364](https://cloud.githubusercontent.com/assets/7671010/19522237/689d2144-95e4-11e6-83e2-b430e7394f1d.png)
+
+MediaMonkey with Google Music!
 
 MediaMonkey = MM
 
