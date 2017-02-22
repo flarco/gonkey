@@ -83,22 +83,25 @@ class GMusic:
         self.tables_data[table_name] = {r['id']:dict2(r) for r in getattr(self.api, api_call)()}
         log("{} -> {}".format(table_name, len(self.tables_data[table_name])))
   
-  def sync_playlist(self, playlist):
+  def sync_playlist(self, playlist, only_metadata = False):
     "Synchronize the playlist between MM and GM: List of songs, ratings, play count"
 
     if not playlist in self.mm.playlist_songs:
       log('Playlist {} missing in MediaMonkey'.format(playlist))
       return
+
     if not playlist in self.playlist_songs:
       log('Playlist {} missing in Google Music'.format(playlist))
+      self.add_playlist(playlist)
       return
     
     mm_playlist = self.mm.playlist_songs[playlist]
     gm_playlist = self.playlist_songs[playlist]
-
-    if not self.compare_playlist(mm_playlist, gm_playlist):
-      self.add_playlist(playlist)
-      self.playlist_modified.append(playlist)
+    
+    if not only_metadata:
+      if not self.compare_playlist(mm_playlist, gm_playlist):
+        self.add_playlist(playlist)
+        self.playlist_modified.append(playlist)
       
     gm_playlist = self.playlist_songs[playlist]
     for track_name in mm_playlist:
@@ -208,12 +211,12 @@ class GMusic:
     for playlist in self.chosen_playlists:
       self.add_playlist(playlist)
 
-  def sync_all_playlists(self):
+  def sync_all_playlists(self, only_metadata = False):
     "Compare all chosen playlists specified in settings file, adjust as necessary"
     self.playlist_modified = []
     
     for playlist in self.chosen_playlists:
-      self.sync_playlist(playlist)
+      self.sync_playlist(playlist, only_metadata)
     
     # if self.playlist_modified:
     #   self.added_songs = False
